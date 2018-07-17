@@ -81,6 +81,7 @@ set(LINPHONE_SOURCE_FILES_C
 	presence.c
 	proxy.c
 	quality_reporting.c
+	recorder.c
 	remote_provisioning.c
 	ringtoneplayer.c
 	siplogin.c

@@ -123,7 +123,7 @@ struct _LinphoneProxyConfig
 	/*use to check if server config has changed  between edit() and done()*/
 	LinphoneAddress *saved_proxy;
 	LinphoneAddress *saved_identity;
-	
+
 	/*---*/
 	LinphoneAddress *pending_contact; /*use to store previous contact in case of network failure*/
 	LinphoneEvent *presence_publish_event;
@@ -602,6 +602,25 @@ struct _LinphonePlayer{
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
+
+
+/*****************************************************************************
+ * Recorder interface                                                          *
+ ****************************************************************************/
+
+struct _LinphoneRecorder{
+	belle_sip_object_t base;
+	void *user_data;
+	int (*open)(LinphoneRecorder* recorder, const char *filename);
+	int (*start)(LinphoneRecorder* recorder);
+	int (*pause)(LinphoneRecorder* recorder);
+	MSRecorderState (*get_state)(LinphoneRecorder* recorder);
+	void (*close)(LinphoneRecorder* recorder);
+	void (*destroy)(LinphoneRecorder *recorder);
+	void *impl;
+};
+
+BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneRecorder);
 
 
 /*****************************************************************************

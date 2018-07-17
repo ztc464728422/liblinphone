@@ -456,6 +456,14 @@ void _linphone_player_destroy(LinphonePlayer *player);
 
 
 /*****************************************************************************
+ * Recorder interface                                                          *
+ ****************************************************************************/
+
+LinphoneRecorder * linphone_recorder_new(void);
+void _linphone_recorder_destroy(LinphoneRecorder *recorder);
+
+
+/*****************************************************************************
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
 

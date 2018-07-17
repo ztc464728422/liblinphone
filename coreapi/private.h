@@ -65,6 +65,7 @@
 #include "vcard_private.h"
 #include "carddav.h"
 #include "linphone/player.h"
+#include "linphone/recorder.h"
 #include "account_creator_private.h"
 #include "tester_utils.h"
 
