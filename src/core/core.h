@@ -185,6 +185,14 @@ public:
 	Address interpretUrl (const std::string &url) const;
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
 	void doLater(const std::function<void ()> &something);
+	const std::string& getPushNotificationType() const;
+	const std::string& getPushNotificationappId() const;
+	const std::string& getPushNotificationToken() const;
+	bool isPushNotificationTimeoutNeeded();
+	void setPushNotificationToken(const std::string& token);
+	void setPushNotificationTimeoutNeeded (bool timeoutNeeded);
+	void setPushNotificationType(const std::string& type);
+	void setPushNotificationappId(const std::string& appId);
 
 private:
 	Core ();

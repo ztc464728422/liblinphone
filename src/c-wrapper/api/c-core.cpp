@@ -131,3 +131,35 @@ bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *lc) {
 void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
 }
+
+const char* linphone_core_get_push_notification_type(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationType());
+}
+
+const char* linphone_core_get_push_notification_application_id(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationappId());
+}
+
+const char* linphone_core_get_push_notification_token(LinphoneCore *lc) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationToken());
+}
+
+bool_t linphone_core_is_push_notification_timeout_needed(LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isPushNotificationTimeoutNeeded() ? TRUE : FALSE;
+}
+
+void linphone_core_set_push_notification_token(LinphoneCore *lc, const char* token) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPushNotificationToken(L_C_TO_STRING(token));
+}
+
+void linphone_core_set_push_notification_timeout_needed(LinphoneCore *lc, bool_t timeoutNeeded) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPushNotificationTimeoutNeeded(timeoutNeeded ? true : false);
+}
+
+void linphone_core_set_push_notification_type(LinphoneCore *lc, const char* type) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPushNotificationType(L_C_TO_STRING(type));
+}
+
+void linphone_core_set_push_notification_application_id(LinphoneCore *lc, const char* appId) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setPushNotificationappId(L_C_TO_STRING(appId));
+}

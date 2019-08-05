@@ -125,6 +125,11 @@ private:
 	bool isInBackground = false;
 	bool isFriendListSubscriptionEnabled = false;
 
+	std::string pushNotificationType;
+	std::string pushNotificationAppId;
+	std::string pushNotificationToken;
+	bool pushNotificationTimeoutNeeded = true;
+
 	std::list<CoreListener *> listeners;
 
 	std::list<std::shared_ptr<Call>> calls;

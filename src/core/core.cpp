@@ -512,5 +512,85 @@ void Core::doLater(const std::function<void ()> &something){
 	getPrivate()->doLater(something);
 }
 
+const string& Core::getPushNotificationType() const {
+	L_D();
+	return d->pushNotificationType;
+}
+
+const string& Core::getPushNotificationappId() const {
+	L_D();
+	return d->pushNotificationAppId;
+}
+
+const string& Core::getPushNotificationToken() const {
+	L_D();
+	return d->pushNotificationToken;
+}
+
+bool Core::isPushNotificationTimeoutNeeded() {
+	L_D();
+	return d->pushNotificationTimeoutNeeded;
+}
+
+void Core::setPushNotificationToken(const string& token) {
+	L_D();
+	bool newToken = d->pushNotificationToken.empty() || d->pushNotificationToken != token;
+	if (!newToken) {
+		return;
+	}
+
+	d->pushNotificationToken = token;
+	lInfo() << "Push notification token set: " << token;
+
+	if (d->pushNotificationType.empty() || d->pushNotificationAppId.empty() || d->pushNotificationToken.empty()) {
+		return;
+	}
+
+	LinphoneCore *lc = getCCore();
+	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
+	bctbx_list_t *it = (bctbx_list_t *)proxies;
+	while (it) {
+		LinphoneProxyConfig *cfg = (LinphoneProxyConfig *) bctbx_list_get_data(it);
+		if (linphone_proxy_config_is_push_notification_allowed(cfg)) {
+			if (cfg->push_notification_allowed) {
+				const char *token = linphone_core_get_push_notification_token(cfg->lc);
+				const char *appId = linphone_core_get_push_notification_application_id(cfg->lc);
+				const char *type = linphone_core_get_push_notification_type(cfg->lc);
+				const char *ring = linphone_core_get_ring(cfg->lc);
+				const char *timeout = linphone_core_is_push_notification_timeout_needed(cfg->lc)? ";pn-timeout=0" : "";
+				if (token && strlen(token) > 0 && appId && strlen(appId) > 0 && type && strlen(type) > 0) {
+					std::ostringstream ss;
+					ss <<  "app-id=" << appId;
+					ss << ";pn-type=" << type;
+					ss <<  ";pn-tok=" << token;
+					ss << ";pn-msg-str=IM_MSG;pn-call-str=IC_MSG;pn-call-snd=" << ring;
+					ss << ";pn-msg-snd=msg.caf" << timeout << ";pn-silent=1";
+					ms_message("Proxy config %s configured for push notifications with contact: %s",
+							   linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg)), ss.str().c_str());
+					linphone_proxy_config_set_contact_uri_parameters(cfg, ss.str().c_str());
+				} else {
+					ms_warning("Proxy config %s NOT configured for push notifications",linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg)));
+					linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
+				}
+			}
+		}
+		it = bctbx_list_next(it);
+	}
+}
+
+void Core::setPushNotificationTimeoutNeeded(bool timeoutNeeded) {
+	L_D();
+	d->pushNotificationTimeoutNeeded = timeoutNeeded;
+}
+
+void Core::setPushNotificationType(const std::string &type) {
+	L_D();
+	d->pushNotificationType = type;
+}
+
+void Core::setPushNotificationappId(const std::string &appId) {
+	L_D();
+	d->pushNotificationAppId = appId;
+}
 
 LINPHONE_END_NAMESPACE

@@ -6021,6 +6021,69 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const 
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 
+/**
+ * Get the currently set push notification type if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification type
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_type(LinphoneCore *lc);
+
+/**
+ * Get the currently set push notification application id if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification application id
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_application_id(LinphoneCore *lc);
+
+/**
+ * Get the currently set push notification token if any
+ * @param[in] lc The #LinphoneCore
+ * @return the push notification token
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char* linphone_core_get_push_notification_token(LinphoneCore *lc);
+
+/**
+ * @brief Tells whether the push notification timeout is needed.
+ * @param[in] lc The #LinphoneCore
+ * @return A boolean telling whether the push notification timeout is needed or not
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_timeout_needed(LinphoneCore *lc);
+
+/**
+ * Set the push notification token returned by Firebase or Pushkit.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] token The push notification token
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_set_push_notification_token(LinphoneCore *lc, const char* token);
+
+/**
+ * Tells to LinphoneCore to use push notification timeout
+ * @param[in] lc LinphoneCore object
+ * @param[in] enable A boolean value telling whether the push notification timeout is needed or not
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_push_notification_timeout_needed(LinphoneCore *lc, bool_t timeoutNeeded);
+
+/**
+ * Set the push notification type.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] token The push notification type
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_set_push_notification_type(LinphoneCore *lc, const char* type);
+
+/**
+ * Set the push notification application id.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] token The push notification application id
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_set_push_notification_application_id(LinphoneCore *lc, const char* appId);
 
 #ifdef __cplusplus
 }
