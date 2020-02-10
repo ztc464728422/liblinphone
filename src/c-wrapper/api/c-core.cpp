@@ -136,6 +136,13 @@ void linphone_core_ensure_registered(LinphoneCore *lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
 }
 
-LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage();
+LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc, const char *call_id) {
+	std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationMessage(Utils::cStringToCppString(call_id));
+	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(cppMsg);
+
+	if (msg) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(msg);
+	}
+	return msg;
 }

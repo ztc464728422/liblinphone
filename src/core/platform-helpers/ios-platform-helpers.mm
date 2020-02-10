@@ -27,11 +27,12 @@
 #include <SystemConfiguration/CaptiveNetwork.h>
 #include <CoreLocation/CoreLocation.h>
 #include  <notify_keys.h>
-
+#include <mutex>
 #include <belr/grammarbuilder.h>
 
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
+#include "chat/chat-room/chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
@@ -48,13 +49,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-typedef enum {
+typedef enum { // TODO PAUL : a mettre dans la classe?
 	noCoreStarted,
 	mainCoreStarted,
 	executorCoreStarted
 } SharedCoreState;
 
-LinphoneChatMessage *pushNotifMsg;
 void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
@@ -93,11 +93,17 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
-	LinphoneChatMessage *getPushNotificationMessage() override;
+	std::shared_ptr<ChatMessage> getPushNotificationMessage(const string &callId) override;
+	std::shared_ptr<ChatMessage> processPushNotificationMessage(const string &callId);
 
 	// shared core
 	bool canCoreStart() override;
 	void onCoreMustStop();
+
+	// push notif
+	void resetMsgCounter();
+	void incrementMsgCounter();
+	void decrementMsgCounter();
 
 	//IosHelper specific
 	bool isReachable(SCNetworkReachabilityFlags flags);
@@ -118,6 +124,7 @@ private:
 	void setupSharedCore(struct _LpConfig *config);
 	bool isCoreShared();
 	bool isSharedCoreStarted();
+	SharedCoreState getSharedCoreState();
 	void setSharedCoreState(SharedCoreState sharedCoreState);
 	void reloadConfig();
 
@@ -137,6 +144,11 @@ private:
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
 	std::string mAppGroup = "";
+
+	// push notif
+	static int newMsgNb;
+	static std::mutex newMsgNbMutex;
+	static std::mutex executorCoreMutex;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -144,6 +156,9 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 // =============================================================================
 
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
+int IosPlatformHelpers::newMsgNb = 0;
+std::mutex IosPlatformHelpers::newMsgNbMutex;
+std::mutex IosPlatformHelpers::executorCoreMutex;
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mCpuLockCount = 0;
@@ -289,6 +304,9 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		stopNetworkMonitoring();
 	}
 	if (isCoreShared()) {
+		if (getSharedCoreState() == SharedCoreState::executorCoreStarted) {
+			IosPlatformHelpers::executorCoreMutex.unlock();
+		}
 		setSharedCoreState(SharedCoreState::noCoreStarted);
 	}
 }
@@ -622,15 +640,59 @@ string IosPlatformHelpers::getWifiSSID(void) {
 #endif
 }
 
+std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(const string &callId) {
+	ms_message("[push] getPushNotificationMessage");
+	incrementMsgCounter();
+	switch(getSharedCoreState()) {
+		case SharedCoreState::mainCoreStarted:
+			resetMsgCounter();
+			ms_message("[push] mainCoreStarted");
+			return nullptr;
+			break;
+		case SharedCoreState::executorCoreStarted:
+			ms_message("[push] executorCoreStarted");
+		case SharedCoreState::noCoreStarted:
+			IosPlatformHelpers::executorCoreMutex.lock();
+			ms_message("[push] noCoreStarted");
+			std::shared_ptr<ChatMessage> msg = processPushNotificationMessage(callId);
+			return msg;
+			break;
+		}
+}
+
+void IosPlatformHelpers::resetMsgCounter() {
+	IosPlatformHelpers::newMsgNbMutex.lock();
+	IosPlatformHelpers::newMsgNb = 0;
+	IosPlatformHelpers::newMsgNbMutex.unlock();
+	ms_message("[push] reset msg counter");
+}
+
+void IosPlatformHelpers::incrementMsgCounter() {
+	IosPlatformHelpers::newMsgNbMutex.lock();
+	IosPlatformHelpers::newMsgNb++;
+	IosPlatformHelpers::newMsgNbMutex.unlock();
+	ms_message("[push] increment msg counter : %d", IosPlatformHelpers::newMsgNb);
+}
+
+void IosPlatformHelpers::decrementMsgCounter() {
+	IosPlatformHelpers::newMsgNbMutex.lock();
+	IosPlatformHelpers::newMsgNb--;
+	IosPlatformHelpers::newMsgNbMutex.unlock();
+	ms_message("[push] decrement msg counter : %d", IosPlatformHelpers::newMsgNb);
+}
+
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
 	const char *contentType = linphone_chat_message_get_content_type(message);
 	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
-		pushNotifMsg = message;
+		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->decrementMsgCounter();
+		ms_message("[push] msg received");
 	}
 }
 
-LinphoneChatMessage *IosPlatformHelpers::getPushNotificationMessage() {
-	pushNotifMsg = nullptr;
+std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
+	std::shared_ptr<ChatMessage> chatMessage;
+	ms_message("[push] processPushNotificationMessage");
+
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
  	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
@@ -638,14 +700,23 @@ LinphoneChatMessage *IosPlatformHelpers::getPushNotificationMessage() {
 	if (linphone_core_start(getCore()->getCCore()) != 0) {
 		return nullptr;
 	}
+	ms_message("[push] core started");
 
-	for (int i = 0; i < 100 && !pushNotifMsg; i++) {
-		ms_message("[PUSH] wait msg: %d", i);
-		linphone_core_iterate(getCore()->getCCore());
-		ms_usleep(100000);
+	chatMessage = getCore()->findChatMessageFromCallId(callId);
+	ms_message("[push] message already in db? %s", chatMessage? "yes" : "no");
+	if (chatMessage) {
+		return chatMessage;
 	}
 
-	return pushNotifMsg;
+	for (int i = 0; i < 100 && 0 < newMsgNb; i++) {
+		ms_message("[push] wait msg: %d, newMsgNb: %d", i, IosPlatformHelpers::newMsgNb);
+		linphone_core_iterate(getCore()->getCCore());
+		ms_usleep(50000);
+	}
+
+	chatMessage = getCore()->findChatMessageFromCallId(callId);
+	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
+	return chatMessage;
 }
 
 // -----------------------------------------------------------------------------
@@ -681,6 +752,12 @@ bool IosPlatformHelpers::isSharedCoreStarted() {
 		return false;
 	}
 	return true;
+}
+
+SharedCoreState IosPlatformHelpers::getSharedCoreState() {
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroup.c_str())];
+    NSInteger state = [defaults integerForKey:@ACTIVE_SHARED_CORE];
+	return (SharedCoreState) state;
 }
 
 /**
