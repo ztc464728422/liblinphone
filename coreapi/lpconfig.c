@@ -484,6 +484,11 @@ LpConfig *linphone_config_new_with_factory(const char *config_filename, const ch
 	}
 }
 
+LpConfig *linphone_config_new_for_shared_core(const char *group_id, const char* config_filename, const char *factory_path) {
+	const char *path = _linphone_core_config_path_for_shared_core(group_id, config_filename);
+	return linphone_config_new_with_factory(path, factory_path);
+}
+
 LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename){
 	char* path = lp_realpath(filename, NULL);
 	bctbx_vfs_file_t* pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, path, "r");

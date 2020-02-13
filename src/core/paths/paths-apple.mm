@@ -81,4 +81,15 @@ std::string SysPaths::getDownloadPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
+std::string SysPaths::getSharedPath(const std::string &groupId, const std::string &fileName) {
+	NSString *objcGroupdId = [NSString stringWithCString:groupId.c_str() encoding:[NSString defaultCStringEncoding]];
+	NSString *objcFileName = [NSString stringWithCString:fileName.c_str() encoding:[NSString defaultCStringEncoding]];
+
+	NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+	NSURL *preferencePath = [basePath URLByAppendingPathComponent:@"Library/Preferences/linphone/"];
+	NSURL *fullPath = [preferencePath URLByAppendingPathComponent:objcFileName];
+
+	return std::string([[fullPath path] UTF8String]);
+}
+
 LINPHONE_END_NAMESPACE

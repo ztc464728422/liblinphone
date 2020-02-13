@@ -99,6 +99,7 @@ public:
 	// shared core
 	bool canCoreStart() override;
 	void onCoreMustStop();
+	static string getSharedPath(const string &groupId, const string &fileName);
 
 	// push notif
 	void resetMsgCounter();
@@ -722,6 +723,17 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 // -----------------------------------------------------------------------------
 // shared core
 // -----------------------------------------------------------------------------
+
+string IosPlatformHelpers::getSharedPath(const string &groupId, const string &fileName) {
+	NSString *objcGroupdId = [NSString stringWithCString:groupId.c_str() encoding:[NSString defaultCStringEncoding]];
+	NSString *objcFileName = [NSString stringWithCString:fileName.c_str() encoding:[NSString defaultCStringEncoding]];
+
+	NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+	NSURL *preferencePath = [basePath URLByAppendingPathComponent:@"Library/Preferences/linphone/"];
+	NSURL *fullPath = [preferencePath URLByAppendingPathComponent:objcFileName];
+
+	return string([[fullPath path] UTF8String]);
+}
 
 void IosPlatformHelpers::setupSharedCore(struct _LpConfig *config) {
 	ms_message("[SHARED] setupSharedCore");
