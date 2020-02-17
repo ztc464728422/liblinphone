@@ -95,6 +95,8 @@ public:
 
 	std::shared_ptr<ChatMessage> getPushNotificationMessage(const string &callId) override;
 	std::shared_ptr<ChatMessage> processPushNotificationMessage(const string &callId);
+	std::shared_ptr<ChatRoom> getPushNotificationChatRoomInvite() override;
+	std::shared_ptr<ChatRoom> processPushNotificationChatRoomInvite();
 
 	// shared core
 	bool canCoreStart() override;
@@ -105,6 +107,7 @@ public:
 	void resetMsgCounter();
 	void incrementMsgCounter();
 	void decrementMsgCounter();
+	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom);
 
 	//IosHelper specific
 	bool isReachable(SCNetworkReachabilityFlags flags);
@@ -150,6 +153,7 @@ private:
 	static int newMsgNb;
 	static std::mutex newMsgNbMutex;
 	static std::mutex executorCoreMutex;
+	static std::shared_ptr<ChatRoom> chatRoomInvite;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -160,6 +164,7 @@ const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 int IosPlatformHelpers::newMsgNb = 0;
 std::mutex IosPlatformHelpers::newMsgNbMutex;
 std::mutex IosPlatformHelpers::executorCoreMutex;
+std::shared_ptr<ChatRoom> IosPlatformHelpers::chatRoomInvite;
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mCpuLockCount = 0;
@@ -649,7 +654,6 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(cons
 			resetMsgCounter();
 			ms_message("[push] mainCoreStarted");
 			return nullptr;
-			break;
 		case SharedCoreState::executorCoreStarted:
 			ms_message("[push] executorCoreStarted");
 		case SharedCoreState::noCoreStarted:
@@ -657,8 +661,23 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::getPushNotificationMessage(cons
 			ms_message("[push] noCoreStarted");
 			std::shared_ptr<ChatMessage> msg = processPushNotificationMessage(callId);
 			return msg;
-			break;
-		}
+	}
+}
+
+std::shared_ptr<ChatRoom> IosPlatformHelpers::getPushNotificationChatRoomInvite() {
+	ms_message("[push] getPushNotificationInvite");
+	switch(getSharedCoreState()) {
+		case SharedCoreState::mainCoreStarted:
+			ms_message("[push] mainCoreStarted");
+			return nullptr;
+		case SharedCoreState::executorCoreStarted:
+			ms_message("[push] executorCoreStarted");
+		case SharedCoreState::noCoreStarted:
+			IosPlatformHelpers::executorCoreMutex.lock();
+			ms_message("[push] noCoreStarted");
+			std::shared_ptr<ChatRoom> chatRoom = processPushNotificationChatRoomInvite();
+			return chatRoom;
+	}
 }
 
 void IosPlatformHelpers::resetMsgCounter() {
@@ -718,6 +737,39 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 	chatMessage = getCore()->findChatMessageFromCallId(callId);
 	ms_message("[push] message received? %s", chatMessage? "yes" : "no");
 	return chatMessage;
+}
+
+void IosPlatformHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {
+	IosPlatformHelpers::chatRoomInvite = chatRoom;
+}
+
+static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
+	if (state == LinphoneChatRoomStateCreated) {
+		ms_message("[push] we are added to a chat room");
+		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->setChatRoomInvite(std::static_pointer_cast<ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)));
+	}
+}
+
+std::shared_ptr<ChatRoom> IosPlatformHelpers::processPushNotificationChatRoomInvite() {
+	ms_message("[push] processPushNotificationInvite");
+	IosPlatformHelpers::chatRoomInvite = nullptr;
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_chat_room_state_changed(cbs, on_push_notification_chat_room_invite_received);
+	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
+
+	if (linphone_core_start(getCore()->getCCore()) != 0) {
+		return nullptr;
+	}
+	ms_message("[push] core started");
+
+	for (int i = 0; i < 100 && !IosPlatformHelpers::chatRoomInvite; i++) {
+		ms_message("[push] wait chatRoom: %d", i);
+		linphone_core_iterate(getCore()->getCCore());
+		ms_usleep(50000);
+	}
+
+	return IosPlatformHelpers::chatRoomInvite;
 }
 
 // -----------------------------------------------------------------------------

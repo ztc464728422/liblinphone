@@ -146,3 +146,14 @@ LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *
 	}
 	return msg;
 }
+
+LinphoneChatRoom * linphone_core_get_push_notification_chat_room_invite(LinphoneCore *lc) {
+	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoomInvite();
+	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
+
+	if (chatRoom) {
+		// We need to take a ref on the object because this function is called from outside linphone-sdk.
+		belle_sip_object_ref(chatRoom);
+	}
+	return chatRoom;
+}

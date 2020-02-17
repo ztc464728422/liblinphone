@@ -665,6 +665,11 @@ std::shared_ptr<ChatMessage> Core::getPushNotificationMessage (const std::string
 	return msg;
 }
 
+std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoomInvite () const {
+	std::shared_ptr<ChatRoom> chatRoom = static_cast<PlatformHelpers *>(getCCore()->platform_helper)->getPushNotificationChatRoomInvite();
+	return chatRoom;
+}
+
 std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string &callId) const {
 	L_D();
 	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);

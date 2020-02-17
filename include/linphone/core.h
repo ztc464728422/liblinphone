@@ -6162,6 +6162,14 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
 **/
 LINPHONE_PUBLIC LinphoneChatMessage * linphone_core_get_push_notification_message(LinphoneCore *lc, const char *call_id);
 
+/**
+ * Get the chat room we have been added into for the push notification
+ * @param[in] lc The #LinphoneCore
+ * @return The #LinphoneChatRoom object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_push_notification_chat_room_invite(LinphoneCore *lc);
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,6 +27,7 @@
 #include "core/core-accessor.h"
 #include "core/core.h"
 #include "chat/chat-message/chat-message.h"
+#include "chat/chat-room/chat-room.h"
 
 // =============================================================================
 
@@ -81,6 +82,7 @@ public:
 
 	virtual bool canCoreStart() = 0;
 	virtual std::shared_ptr<ChatMessage> getPushNotificationMessage(const std::string &callId) = 0;
+	virtual	std::shared_ptr<ChatRoom> getPushNotificationChatRoomInvite() = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -132,6 +134,7 @@ public:
 
 	bool canCoreStart() override;
 	std::shared_ptr<ChatMessage> getPushNotificationMessage(const std::string &callId) override;
+	std::shared_ptr<ChatRoom> getPushNotificationChatRoomInvite() override;
 
 protected:
 	std::string mCurrentSSID;
