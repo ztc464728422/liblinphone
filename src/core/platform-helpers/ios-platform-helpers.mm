@@ -310,10 +310,12 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		stopNetworkMonitoring();
 	}
 	if (isCoreShared()) {
-		if (getSharedCoreState() == SharedCoreState::executorCoreStarted) {
+		bool needUnlock = (getSharedCoreState() == SharedCoreState::executorCoreStarted);
+		setSharedCoreState(SharedCoreState::noCoreStarted);
+		if (needUnlock) {
+			ms_message("[push] unlock executorCoreMutex");
 			IosPlatformHelpers::executorCoreMutex.unlock();
 		}
-		setSharedCoreState(SharedCoreState::noCoreStarted);
 	}
 }
 
@@ -702,11 +704,17 @@ void IosPlatformHelpers::decrementMsgCounter() {
 }
 
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
+	// ms_message("[push] msg received");
 	const char *contentType = linphone_chat_message_get_content_type(message);
 	if (strcmp(contentType, "text/plain") == 0 || strcmp(contentType, "image/jpeg") == 0) {
-		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->decrementMsgCounter();
 		ms_message("[push] msg received");
+		static_cast<LinphonePrivate::IosPlatformHelpers*>(lc->platform_helper)->decrementMsgCounter();
 	}
+}
+
+static void failed_to_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
+	ms_message("[push] failed to decrypt");
+
 }
 
 std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
@@ -715,6 +723,7 @@ std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
  	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
+	linphone_core_cbs_set_message_received_unable_decrypt(cbs, failed_to_decrypt);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 
 	if (linphone_core_start(getCore()->getCCore()) != 0) {
