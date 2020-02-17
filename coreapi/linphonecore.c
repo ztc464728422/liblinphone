@@ -2654,7 +2654,7 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 const char *_linphone_core_config_path_for_shared_core(const char *group_id, const char *config_file_name) {
 	#ifdef __APPLE__
 		std::string path = SysPaths::getSharedPath(group_id, config_file_name);
-		return path.c_str();
+		return ms_strdup(path.c_str());
 	#else
 		return ""
 	#endif
@@ -6350,6 +6350,9 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
  * Called by linphone_core_stop_async() to begin the async stop process and change the state to "Shutdown"
  */
 static void _linphone_core_stop_async_start(LinphoneCore *lc) {
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		return;
+	}
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
 	lc->async_stop = TRUE;
@@ -6462,6 +6465,9 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 }
 
 static void _linphone_core_stop(LinphoneCore *lc) {
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
+		return;
+	}
 	bctbx_list_t *elem = NULL;
 	int i=0;
 	bool_t wait_until_unsubscribe = FALSE;
