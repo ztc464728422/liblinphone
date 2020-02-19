@@ -104,18 +104,17 @@ void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) 
 }
 
 bool Imdn::hasUndeliveredImdnMessage() {
-	return !sentImdnMessages.empty();
+	return !(sentImdnMessages.empty() && deliveredMessages.empty() && displayedMessages.empty() && nonDeliveredMessages.empty());
 }
 
 // -----------------------------------------------------------------------------
 
 void Imdn::onGlobalStateChanged (LinphoneGlobalState state) {
-	if (state == LinphoneGlobalShutdown) {
+	if (state == LinphoneGlobalOff) {
 		auto ref = chatRoom->getSharedFromThis();
 		deliveredMessages.clear();
 		displayedMessages.clear();
 		nonDeliveredMessages.clear();
-	} else if (state == LinphoneGlobalOff) {
 		sentImdnMessages.clear();
 	}
 }

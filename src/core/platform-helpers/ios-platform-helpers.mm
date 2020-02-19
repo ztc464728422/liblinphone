@@ -712,18 +712,12 @@ static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChat
 	}
 }
 
-static void failed_to_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
-	ms_message("[push] failed to decrypt");
-
-}
-
 std::shared_ptr<ChatMessage> IosPlatformHelpers::processPushNotificationMessage(const string &callId) {
 	std::shared_ptr<ChatMessage> chatMessage;
 	ms_message("[push] processPushNotificationMessage");
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
  	linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
-	linphone_core_cbs_set_message_received_unable_decrypt(cbs, failed_to_decrypt);
 	linphone_core_add_callbacks(getCore()->getCCore(), cbs);
 
 	if (linphone_core_start(getCore()->getCCore()) != 0) {
