@@ -647,6 +647,33 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_database_storage_available(LinphoneFa
 LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory);
 
 /**
+ * Get the config path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *groupId on iOS with shared core.
+ * @return The config path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_config_path(LinphoneFactory *factory, void *context);
+
+/**
+ * Get the data path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *groupId on iOS with shared core.
+ * @return The data path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_data_path(LinphoneFactory *factory, void *context);
+
+/**
+ * Get the download path
+ * @param[in] factory the #LinphoneFactory
+ * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *groupId on iOS with shared core.
+ * @return The download path
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_download_path(LinphoneFactory *factory, void *context);
+
+/**
  * @}
  */
 

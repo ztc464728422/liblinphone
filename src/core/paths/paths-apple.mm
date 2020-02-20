@@ -27,10 +27,20 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-std::string SysPaths::getDataPath (PlatformHelpers *) {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-	NSString *writablePath = [paths objectAtIndex:0];
-	NSString *fullPath = [writablePath stringByAppendingString:@"/linphone/"];
+std::string SysPaths::getDataPath (void *context) {
+	NSString *fullPath;
+	if (context) {
+		const char* groupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:groupId encoding:[NSString defaultCStringEncoding]];
+
+		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		fullPath = [[basePath path] stringByAppendingPathComponent:@"/Library/Application Support/linphone/"];
+	} else {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+		NSString *writablePath = [paths objectAtIndex:0];
+		fullPath = [writablePath stringByAppendingString:@"/linphone/"];
+	}
+
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Data path " << fullPath.UTF8String << " does not exist, creating it.";
@@ -45,10 +55,20 @@ std::string SysPaths::getDataPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
-std::string SysPaths::getConfigPath (PlatformHelpers *) {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-	NSString *configPath = [paths objectAtIndex:0];
-	NSString *fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
+std::string SysPaths::getConfigPath (void *context) {
+	NSString *fullPath;
+	if (context) {
+		const char* groupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:groupId encoding:[NSString defaultCStringEncoding]];
+
+		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		fullPath = [[basePath path] stringByAppendingPathComponent:@"Library/Preferences/linphone/"];
+	} else {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+		NSString *configPath = [paths objectAtIndex:0];
+		fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
+	}
+
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Config path " << fullPath.UTF8String << " does not exist, creating it.";
@@ -63,7 +83,7 @@ std::string SysPaths::getConfigPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
-std::string SysPaths::getDownloadPath (PlatformHelpers *) {
+std::string SysPaths::getDownloadPath (void *context) {
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 	NSString *configPath = [paths objectAtIndex:0];
 	NSString *fullPath = [configPath stringByAppendingString:@"/"];
@@ -79,17 +99,6 @@ std::string SysPaths::getDownloadPath (PlatformHelpers *) {
 	}
 
 	return fullPath.UTF8String;
-}
-
-std::string SysPaths::getSharedPath(const std::string &groupId, const std::string &fileName) {
-	NSString *objcGroupdId = [NSString stringWithCString:groupId.c_str() encoding:[NSString defaultCStringEncoding]];
-	NSString *objcFileName = [NSString stringWithCString:fileName.c_str() encoding:[NSString defaultCStringEncoding]];
-
-	NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-	NSURL *preferencePath = [basePath URLByAppendingPathComponent:@"Library/Preferences/linphone/"];
-	NSURL *fullPath = [preferencePath URLByAppendingPathComponent:objcFileName];
-
-	return std::string([[fullPath path] UTF8String]);
 }
 
 LINPHONE_END_NAMESPACE

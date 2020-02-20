@@ -75,6 +75,7 @@ public:
 	string getImageResource (const string &filename) const override;
 	string getRingResource (const string &filename) const override;
 	string getSoundResource (const string &filename) const override;
+	void * getPathContext () override;
 
 	string getWifiSSID() override;
 	void setWifiSSID(const string &ssid) override;
@@ -296,6 +297,10 @@ string IosPlatformHelpers::getResourceDirPath (const string &framework, const st
 
 string IosPlatformHelpers::getResourcePath (const string &framework, const string &resource) {
 	return getResourceDirPath(framework, resource) + "/" + resource;
+}
+
+void *IosPlatformHelpers::getPathContext () {
+	return ms_strdup(mAppGroup.c_str());
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {

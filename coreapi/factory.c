@@ -22,6 +22,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 #include "address/address-p.h"
+#include "core/paths/paths.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -551,4 +552,19 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 #else
 	return FALSE;
 #endif
+}
+
+const char *linphone_factory_get_config_path(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
+	return ms_strdup(path.c_str());
+}
+
+const char *linphone_factory_get_data_path(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
+	return ms_strdup(path.c_str());
+}
+
+const char *linphone_factory_get_download_path(LinphoneFactory *factory, void *context) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
+	return ms_strdup(path.c_str());
 }

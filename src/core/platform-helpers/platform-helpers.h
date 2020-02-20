@@ -58,6 +58,7 @@ public:
 	virtual std::string getImageResource (const std::string &filename) const = 0;
 	virtual std::string getRingResource (const std::string &filename) const = 0;
 	virtual std::string getSoundResource (const std::string &filename) const = 0;
+	virtual void * getPathContext () = 0;
 
 	virtual std::string getWifiSSID() = 0;
 	virtual void setWifiSSID(const std::string &ssid) = 0;
@@ -112,6 +113,7 @@ public:
 	std::string getImageResource (const std::string &filename) const override;
 	std::string getRingResource (const std::string &filename) const override;
 	std::string getSoundResource (const std::string &filename) const override;
+	void * getPathContext () override;
 
 	std::string getWifiSSID() override;
 	void setWifiSSID(const std::string &ssid) override;

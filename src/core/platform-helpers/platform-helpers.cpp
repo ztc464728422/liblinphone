@@ -89,6 +89,9 @@ string GenericPlatformHelpers::getSoundResource (const string &filename) const {
 	);
 }
 
+void *GenericPlatformHelpers::getPathContext () {
+	return nullptr;
+}
 
 void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 

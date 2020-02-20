@@ -90,7 +90,6 @@
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
-#include "core/paths/paths-apple.h"
 #endif
 
 #include "c-wrapper/c-wrapper.h"
@@ -2649,15 +2648,6 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 	}
 	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
 	return core;
-}
-
-const char *_linphone_core_config_path_for_shared_core(const char *group_id, const char *config_file_name) {
-	#ifdef __APPLE__
-		std::string path = SysPaths::getSharedPath(group_id, config_file_name);
-		return ms_strdup(path.c_str());
-	#else
-		return ""
-	#endif
 }
 
 static LinphoneCore *_linphone_core_new_with_config_and_start (
